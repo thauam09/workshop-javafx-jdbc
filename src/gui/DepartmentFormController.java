@@ -3,7 +3,9 @@ package gui;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.Set;
 
 import db.DbException;
 import gui.listeners.DataChangeListener;
@@ -18,6 +20,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import model.entities.Department;
+import model.exceptions.ValidationException;
 import model.services.DepartmentService;
 
 public class DepartmentFormController implements Initializable {
@@ -27,7 +30,7 @@ public class DepartmentFormController implements Initializable {
 	private DepartmentService service;
 
 	private List<DataChangeListener> dataChangeListeners = new ArrayList<>();
-	
+
 	@FXML
 	private TextField txtId;
 
@@ -50,8 +53,8 @@ public class DepartmentFormController implements Initializable {
 	public void setDepartmentService(DepartmentService service) {
 		this.service = service;
 	}
-	
-	public void subscriberDataChangeListener(DataChangeListener listener) {
+
+	public void subscribeDataChangeListener(DataChangeListener listener) {
 		dataChangeListeners.add(listener);
 	}
 
@@ -71,13 +74,15 @@ public class DepartmentFormController implements Initializable {
 			notifyDataChangeListeners();
 			Utils.currentStage(event).close();
 			Alerts.showAlerts("Success!", "Success", "The Department was saved successfully!", AlertType.INFORMATION);
+		} catch (ValidationException e) {
+			setErrorMessages(e.getErrors());
 		} catch (DbException e) {
 			Alerts.showAlerts("Error saving object", null, e.getMessage(), AlertType.ERROR);
 		}
 	}
 
 	private void notifyDataChangeListeners() {
-		for(DataChangeListener listener : dataChangeListeners) {
+		for (DataChangeListener listener : dataChangeListeners) {
 			listener.onDataChanged();
 		}
 	}
@@ -108,9 +113,29 @@ public class DepartmentFormController implements Initializable {
 	public Department getFormData() {
 		Integer id = Utils.tryParseToInt(txtId.getText());
 		String name = txtName.getText();
+
+		ValidationException exception = new ValidationException("Validation error");
+
+		if (name == null || name.trim().equals("")) {
+			exception.addError("name", "Name field is required!");
+		}
+
+		if (exception.getErrors().size() > 0) {
+			throw exception;
+		}
+
 		Department department = new Department();
 		department.setId(id);
 		department.setName(name);
 		return department;
+	}
+
+	public void setErrorMessages(Map<String, String> errors) {
+		Set<String> fields = errors.keySet();
+
+		if (fields.contains("name")) {
+			labelErrorName.setText(errors.get("name"));
+		}
+
 	}
 }
