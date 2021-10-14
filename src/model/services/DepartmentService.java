@@ -14,7 +14,7 @@ public class DepartmentService {
 		return list;
 	}
 
-	public void SaveOrUpdate(Department obj) {
+	public void saveOrUpdate(Department obj) {
 		if (obj.getId() == null) {
 			dao.insert(obj);
 		} else {
@@ -22,7 +22,7 @@ public class DepartmentService {
 		}
 	}
 
-	public void Remove(Department obj) {
+	public void remove(Department obj) {
 		dao.deleteById(obj.getId());
 	}
 }
